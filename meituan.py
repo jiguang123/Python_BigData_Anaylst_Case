@@ -15,7 +15,7 @@ url = 'http://chs.meituan.com/'
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
 }
-
+  
 #获取分类（电影、美食）
 def get_start_links(url):
     html = requests.get(url).text #发送请求获取主页文本
@@ -30,6 +30,23 @@ def get_detail_id(url, headers=None):
     content_id = json.loads(soup.find('div', class_='J-scrollloader cf J-hub')['data-async-params'])
     return json.loads(content_id.get('data')).get('poiidList') 
 
+#获取店铺详情数据
+def get_item_info(url, headers=None):
+	html = requests.get(url,headers=headers).text
+	soup = BeautifulSoup(html,'lxml')	
+    title = soup.find('span', class_='title').text #标题
+    score = soup.find('span', class_='biz-level').get_text() #评分
+    address = soup.find('span', class_='geo').text #地址
+    phone = soup.find_all('p', class_='under-title')[1].get_text() #电话
+    Evaluation_number = soup.find('a', class_='num rate-count').text #评价
+    print (u'店名： '+title) 
+    print (u'评论数量： '+Evaluation_number)
+    print (u'地址： '+address)
+    print (u'评分： '+score) 
+    print (u'电话： '+phone)
+    print ('======================================================')
+    return (title, score, address, phone, Evaluation_number)
+
 #多页获取商品id
 def main(url):
     start_url_list = get_start_links(url)
@@ -38,6 +55,10 @@ def main(url):
             category_url = j+'/all/page()'.format(i) #完整的分类多页链接
             shop_id_list = get_detail_id(category_url,headers=headers)
             print (shop_id_list)
+            for shop_id in shop_id_list:
+            	items = get_item_info(url+'shop/{}'.format(shop_id),headers)
+            	items_list.append(items)
 
 if __name__ == '__main__':
+    items_list = []
     main(url)
